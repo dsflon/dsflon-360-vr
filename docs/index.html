@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>Video</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<link href="./common/css/common.css" rel="stylesheet">
+	<link href="./common/css/threedemo.css" rel="stylesheet">
+	<style>
+	#play { left: 50%; }
+	#next,#prev {
+		/*position: fixed;
+		top: 48%;
+		font-size: 40px;
+		color: #FFF;
+		cursor: pointer;
+		text-decoration: none !important;
+		text-shadow: 0 0 10px rgba(0,0,0,0.8);*/
+	}
+	#next span,#prev span { font-size: 10px; display: block; }
+	#next { right: 20px; }
+	#prev { left: 20px; }
+
+	#next,
+	#prev,
+	#stop,
+	#volume,
+	#reload,
+	#play.play
+	{
+		display: none !important;
+	}
+
+	#wrap,#full {
+		position: fixed;
+		bottom: 20px;
+	}
+	#full,
+	#vr,
+	#orientation {
+		line-height: 1;
+		background: #FFF;
+		margin-left: 10px;
+		border-radius: 5px;
+		padding: 10px 10px 8px;
+		opacity: 0.2;
+		font-size: 10px;
+	}
+	#vr.active,
+	#orientation.active {
+		opacity: 0.7;
+	}
+	#vr {
+		display: inline-block;
+	}
+	#orientation {
+		display: inline-block;
+	}
+	#full {
+		right: 20px;
+		opacity: 0.2;
+	}
+	#full.active {
+		opacity: 0.7;
+	}
+	</style>
+
+</head>
+<body>
+
+<div id="video"></div>
+<div id="loading">Loading ...</div>
+<div id="play" class="disabled">▶</div>
+<div id="stop" class="disabled">■</div>
+<div id="volume" class="disabled">♪</div>
+<div id="reload" class="disabled" onclick="location.reload()"></div>
+<a id="next">><span>次へ</span></a>
+<a id="prev"><<span>前へ</span></a>
+
+<div id="wrap">
+	<div id="orientation">Orientation</div>
+	<div id="vr">VR</div>
+</div>
+<div id="full">Full Screen</div>
+
+<script src="./common/libs/three.min.js"></script>
+<script src="./common/libs/OrbitControls.js"></script>
+<script src="./common/libs/DeviceOrientationControls.js"></script>
+<script src="./common/libs/StereoEffect.js"></script>
+<script src="./common/js/j_three.panoramaVideoViewerVR.js"></script>
+
+<script>
+
+let fullScreen = false;
+let orientation = false,
+	vr = false;
+
+let array = [
+	"./common/video/02.mp4"
+]
+
+let first = true;
+let videoSrc = array[0];
+let videoIndex = 0;
+
+if( location.search && location.search.split("src=")[1] ) {
+	videoSrc = location.search.split("src=")[1].split("&")[0];
+}
+if( location.search && location.search.split("index=")[1] ) {
+	// videoIndex = Number( location.search.split("index=")[1].split("&")[0] );
+}
+
+let full = document.getElementById("full");
+if (!document.body.webkitRequestFullScreen) {
+	full.style.display = "none";
+}
+full.onclick = function() {
+
+	if( !fullScreen ) {
+		if (document.body.webkitRequestFullscreen) {
+			document.body.webkitRequestFullscreen(); //Chrome15+, Safari5.1+, Opera15+
+		} else if (document.body.mozRequestFullScreen) {
+			document.body.mozRequestFullScreen(); //FF10+
+		} else if (document.body.msRequestFullscreen) {
+			document.body.msRequestFullscreen(); //IE11+
+		} else if (document.body.requestFullscreen) {
+			document.body.requestFullscreen(); // HTML5 Fullscreen API仕様
+		} else {
+			alert('ご利用のブラウザはフルスクリーン操作に対応していません');
+			return;
+		}
+		this.classList.add("active");
+	} else {
+		if (document.webkitCancelFullScreen) {
+			document.webkitCancelFullScreen(); //Chrome15+, Safari5.1+, Opera15+
+		} else if (document.mozCancelFullScreen) {
+			document.mozCancelFullScreen(); //FF10+
+		} else if (document.msExitFullscreen) {
+			document.msExitFullscreen(); //IE11+
+		} else if(document.cancelFullScreen) {
+			document.cancelFullScreen(); //Gecko:FullScreenAPI仕様
+		} else if(document.exitFullscreen) {
+			document.exitFullscreen(); // HTML5 Fullscreen API仕様
+		}
+		this.classList.remove("active");
+	}
+
+	fullScreen = !fullScreen;
+
+}
+
+window.addEventListener("load", function(){
+	VideoInit();
+	Init();
+});
+
+function VideoInit() {
+
+    videoID = document.getElementById("video");
+    mainVideo = new jThreePanoramaVideoViewer(videoID, videoSrc, 0.2, true);
+	mainVideo.autoRotate = false;
+	mainVideo.minDistance = 0.01;
+	mainVideo.defaultDistance = 4;
+
+}
+function Init(){
+
+	loading = document.getElementById("loading");
+	button = document.getElementById("play");
+	stop = document.getElementById("stop");
+	volume = document.getElementById("volume");
+	reload = document.getElementById("reload");
+
+	//
+
+	// let arrayLength = array.length;
+	// let next = document.getElementById("next");
+	// let prev = document.getElementById("prev");
+    //
+	// let nextPath = '?src='+ array[videoIndex + 1] +'&index=' + (videoIndex + 1);
+	// let prevPath = '?src='+ array[videoIndex - 1] +'&index=' + (videoIndex - 1);
+    //
+	// if( videoIndex == array.length - 1 ) {
+	// 	nextPath = '?src='+ array[0] +'&index=0';
+	// } else if( videoIndex == 0 ) {
+	// 	prevPath = '?src='+ array[array.length - 1] +'&index=' + (array.length - 1);
+	// }
+	// next.setAttribute("href",nextPath);
+	// prev.setAttribute("href",prevPath);
+
+
+	//
+
+	mainVideo.video.addEventListener("canplay",loadEnd);
+	button.addEventListener("click", MoviePlay, false);
+	// volume.addEventListener("click", Volume, false);
+	// stop.addEventListener("click", Stop, false);
+
+	let o = document.getElementById("orientation");
+	let v = document.getElementById("vr");
+
+	o.onclick = function() {
+
+		if( !orientation ) {
+			mainVideo.deviceOrientationControls = true;
+			if(!first) mainVideo.changeMode();
+			this.classList.add("active");
+			orientation = true;
+		} else {
+			mainVideo.deviceOrientationControls = false;
+			mainVideo.vr = false;
+			if(!first) mainVideo.changeMode();
+			this.classList.remove("active");
+			v.classList.remove("active");
+			orientation = false;
+			vr = false;
+		}
+
+	};
+	v.onclick = function() {
+
+		if( !vr ) {
+			mainVideo.deviceOrientationControls = true;
+			mainVideo.vr = true;
+			if(!first) mainVideo.changeMode();
+			this.classList.add("active");
+			o.classList.add("active");
+			orientation = true;
+			vr = true;
+		} else {
+			mainVideo.deviceOrientationControls = false;
+			mainVideo.vr = false;
+			if(!first) mainVideo.changeMode();
+			this.classList.remove("active");
+			o.classList.remove("active");
+			orientation = false;
+			vr = false;
+		}
+
+	};
+
+}
+
+function loadEnd() {
+	button.className = "";
+	loading.className = "loadEnd";
+	mainVideo.video.removeEventListener("canplay",loadEnd);
+}
+
+function MoviePlay() {
+
+	button.className = "play";
+	stop.className = "play";
+	reload.className = "play";
+
+	if(first){
+		if(!/(iPhone|iPod|iPad)/.test(navigator.userAgent)) volume.className = "play";
+		mainVideo.play();
+		first = false;
+	} else {
+		mainVideo.pauseToggle();
+	}
+
+	// if(mainVideo.playing){
+	// 	button.textContent = "||";
+	// } else {
+	// 	button.textContent = "▶";
+	// 	stop.className = "play";
+	// }
+
+}
+// function Stop() {
+//
+// 	mainVideo.stop();
+// 	stop.className = "play stop";
+// 	button.textContent = "▶";
+//
+// }
+// function Volume() {
+//
+// 	mainVideo.volFadeToggle();
+//
+// 	if(mainVideo.muting){
+// 		volume.className = "play";
+// 	} else {
+// 		volume.className = "play mute";
+// 	}
+//
+// }
+
+</script>
+
+</body>
+</html>
